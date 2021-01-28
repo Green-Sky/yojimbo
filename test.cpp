@@ -22,7 +22,8 @@
     USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "yojimbo.h"
+#include <yojimbo_serializer.h>
+
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -225,7 +226,9 @@ struct TestData
     double double_value;
     uint64_t uint64_value;
     uint8_t bytes[17];
-    char string[MaxAddressLength];
+    //char string[MaxAddressLength];
+	static const int max_string_len = 256;
+    char string[max_string_len];
 };
 
 struct TestContext

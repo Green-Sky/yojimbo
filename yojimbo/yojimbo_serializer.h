@@ -221,7 +221,7 @@ template <typename T> void yojimbo_swap( T & a, T & b )
     T tmp = a;
     a = b;
     b = tmp;
-};
+}
 
 /**
     Get the absolute value.
