@@ -7,23 +7,23 @@
 
         1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
 
-        2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer 
+        2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer
            in the documentation and/or other materials provided with the distribution.
 
-        3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived 
+        3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived
            from this software without specific prior written permission.
 
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
-    INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
-    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
-    SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
-    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+    INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+    SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
     WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
     USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef YOJIMBO_H
-#define YOJIMBO_H
+#ifndef YOJIMBO_SERIALIZER_H
+#define YOJIMBO_SERIALIZER_H
 
 /** @file */
 
@@ -45,7 +45,7 @@
     #else
       #error Unknown machine endianess detected. User needs to define YOJIMBO_LITTLE_ENDIAN or YOJIMBO_BIG_ENDIAN.
     #endif // __BYTE_ORDER__
-  
+
   // Detect with GLIBC's endian.h
   #elif defined(__GLIBC__)
     #include <endian.h>
@@ -56,13 +56,13 @@
     #else
       #error Unknown machine endianess detected. User needs to define YOJIMBO_LITTLE_ENDIAN or YOJIMBO_BIG_ENDIAN.
     #endif // __BYTE_ORDER
-  
+
   // Detect with _LITTLE_ENDIAN and _BIG_ENDIAN macro
   #elif defined(_LITTLE_ENDIAN) && !defined(_BIG_ENDIAN)
     #define YOJIMBO_LITTLE_ENDIAN 1
   #elif defined(_BIG_ENDIAN) && !defined(_LITTLE_ENDIAN)
     #define YOJIMBO_BIG_ENDIAN 1
-  
+
   // Detect with architecture macros
   #elif    defined(__sparc)     || defined(__sparc__)                           \
         || defined(_POWER)      || defined(__powerpc__)                         \
@@ -78,7 +78,7 @@
   #elif defined(_MSC_VER) && defined(_M_ARM)
     #define YOJIMBO_LITTLE_ENDIAN 1
   #else
-    #error Unknown machine endianess detected. User needs to define YOJIMBO_LITTLE_ENDIAN or YOJIMBO_BIG_ENDIAN. 
+    #error Unknown machine endianess detected. User needs to define YOJIMBO_LITTLE_ENDIAN or YOJIMBO_BIG_ENDIAN.
   #endif
 #endif
 
@@ -93,10 +93,6 @@
 #ifndef YOJIMBO_DEFAULT_TIMEOUT
 #define YOJIMBO_DEFAULT_TIMEOUT 5
 #endif
-
-#if !defined( YOJIMBO_WITH_MBEDTLS )
-#define YOJIMBO_WITH_MBEDTLS 1
-#endif // #if !defined( YOJIMBO_WITH_MBEDTLS )
 
 #ifdef _MSC_VER
 #pragma warning( disable : 4127 )
@@ -133,23 +129,22 @@
 
 #define YOJIMBO_ENABLE_LOGGING                      1
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
-#include <memory.h>
-#include <math.h>
 #include <inttypes.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <memory.h>
+
+#include <new>
+
 #if YOJIMBO_DEBUG_MESSAGE_LEAKS
 #include <map>
 #endif // #if YOJIMBO_DEBUG_MESSAGE_LEAKS
 
-// windows =p
-#ifdef SendMessage
-#undef SendMessage
-#endif
 
 /// The library namespace.
 
@@ -168,6 +163,7 @@ bool InitializeYojimbo();
 /**
     Shutdown the yojimbo library.
     Call this after you finish using the library and it will run some checks for you (for example, checking for memory leaks in debug build).
+
  */
 
 void ShutdownYojimbo();
@@ -270,7 +266,7 @@ void yojimbo_log_level( int level );
 
 /**
     Printf function used by yojimbo to emit logs.
-    This function internally calls the printf callback set by the user. 
+    This function internally calls the printf callback set by the user.
     @see yojimbo_set_printf_function
  */
 
@@ -312,11 +308,6 @@ void yojimbo_set_printf_function( int (*function)( const char * /*format*/, ... 
 
 void yojimbo_set_assert_function( void (*function)( const char * /*condition*/, const char * /*function*/, const char * /*file*/, int /*line*/ ) );
 
-#include <stdint.h>
-#include <new>
-#if YOJIMBO_DEBUG_MEMORY_LEAKS
-#include <map>
-#endif // YOJIMBO_DEBUG_MEMORY_LEAKS
 
 typedef void* tlsf_t;
 
@@ -335,9 +326,9 @@ namespace yojimbo {
     #define YOJIMBO_NEW( a, T, ... ) ( new ( (a).Allocate( sizeof(T), __FILE__, __LINE__ ) ) T(__VA_ARGS__) )
 
     /// Macro for deleting an object created with a yojimbo allocator.
-    #define YOJIMBO_DELETE( a, T, p ) do { if (p) { (p)->~T(); (a).Free( p, __FILE__, __LINE__ ); p = NULL; } } while (0)    
+    #define YOJIMBO_DELETE( a, T, p ) do { if (p) { (p)->~T(); (a).Free( p, __FILE__, __LINE__ ); p = NULL; } } while (0)
 
-    /// Macro for allocating a block of memory with a yojimbo allocator. 
+    /// Macro for allocating a block of memory with a yojimbo allocator.
     #define YOJIMBO_ALLOCATE( a, bytes ) (a).Allocate( (bytes), __FILE__, __LINE__ )
 
     /// Macro for freeing a block of memory created with a yojimbo allocator.
@@ -366,7 +357,7 @@ namespace yojimbo {
 #if YOJIMBO_DEBUG_MEMORY_LEAKS
 
     /**
-        Debug structure used to track allocations and find memory leaks. 
+        Debug structure used to track allocations and find memory leaks.
         Active in debug build only. Disabled in release builds for performance reasons.
      */
 
@@ -541,7 +532,7 @@ namespace yojimbo {
 
         /**
             TLSF allocator constructor.
-            If you want to integrate your own allocator with yojimbo for use with the client and server, this class is a good template to start from. 
+            If you want to integrate your own allocator with yojimbo for use with the client and server, this class is a good template to start from.
             Make sure your constructor has the same signature as this one, and it will work with the YOJIMBO_SERVER_ALLOCATOR and YOJIMBO_CLIENT_ALLOCATOR helper macros.
             @param memory Block of memory in which the allocator will work. This block must remain valid while this allocator exists. The allocator does not assume ownership of it, you must free it elsewhere, if necessary.
             @param bytes The size of the block of memory (bytes). The maximum amount of memory you can allocate will be less, due to allocator overhead.
@@ -603,7 +594,7 @@ namespace yojimbo {
                  d =   c + ( c >> 8 ),
                  e =   d + ( d >> 16 ),
 
-            result = e & 0x0000003f 
+            result = e & 0x0000003f
         };
     };
 
@@ -770,10 +761,10 @@ namespace yojimbo {
 #endif // #if YOJIMBO_BIG_ENDIAN
     }
 
-    /** 
+    /**
         Compares two 16 bit sequence numbers and returns true if the first one is greater than the second (considering wrapping).
         IMPORTANT: This is not the same as s1 > s2!
-        Greater than is defined specially to handle wrapping sequence numbers. 
+        Greater than is defined specially to handle wrapping sequence numbers.
         If the two sequence numbers are close together, it is as normal, but they are far apart, it is assumed that they have wrapped around.
         Thus, sequence_greater_than( 1, 0 ) returns true, and so does sequence_greater_than( 0, 65535 )!
         @param s1 The first sequence number.
@@ -783,14 +774,14 @@ namespace yojimbo {
 
     inline bool sequence_greater_than( uint16_t s1, uint16_t s2 )
     {
-        return ( ( s1 > s2 ) && ( s1 - s2 <= 32768 ) ) || 
+        return ( ( s1 > s2 ) && ( s1 - s2 <= 32768 ) ) ||
                ( ( s1 < s2 ) && ( s2 - s1  > 32768 ) );
     }
 
-    /** 
+    /**
         Compares two 16 bit sequence numbers and returns true if the first one is less than the second (considering wrapping).
         IMPORTANT: This is not the same as s1 < s2!
-        Greater than is defined specially to handle wrapping sequence numbers. 
+        Greater than is defined specially to handle wrapping sequence numbers.
         If the two sequence numbers are close together, it is as normal, but they are far apart, it is assumed that they have wrapped around.
         Thus, sequence_less_than( 0, 1 ) returns true, and so does sequence_greater_than( 65535, 0 )!
         @param s1 The first sequence number.
@@ -977,7 +968,7 @@ namespace yojimbo {
         ~Queue()
         {
             yojimbo_assert( m_allocator );
-            
+
             YOJIMBO_FREE( *m_allocator, m_entries );
 
             m_arraySize = 0;
@@ -1015,7 +1006,7 @@ namespace yojimbo {
         /**
             Push a value on to the queue.
             @param value The value to push onto the queue.
-            IMPORTANT: Will assert if the queue is already full. Check Queue::IsFull before calling this!   
+            IMPORTANT: Will assert if the queue is already full. Check Queue::IsFull before calling this!
          */
 
         void Push( const T & value )
@@ -1107,7 +1098,7 @@ namespace yojimbo {
 
     /**
         Data structure that stores data indexed by sequence number.
-        Entries may or may not exist. If they don't exist the sequence value for the entry at that index is set to 0xFFFFFFFF. 
+        Entries may or may not exist. If they don't exist the sequence value for the entry at that index is set to 0xFFFFFFFF.
         This provides a constant time lookup for an entry by sequence number. If the entry at sequence modulo buffer size doesn't have the same sequence number, that sequence number is not stored.
         This is incredibly useful and is used as the foundation of the packet level ack system and the reliable message send and receive queues.
         @see Connection
@@ -1279,7 +1270,7 @@ namespace yojimbo {
             @see yojimbo::sequence_less_than
          */
 
-        uint16_t GetSequence() const 
+        uint16_t GetSequence() const
         {
             return m_sequence;
         }
@@ -1296,7 +1287,7 @@ namespace yojimbo {
             return sequence % m_size;
         }
 
-        /** 
+        /**
             Get the size of the sequence buffer.
             @returns The size of the sequence buffer (number of entries).
          */
@@ -1308,17 +1299,17 @@ namespace yojimbo {
 
     protected:
 
-        /** 
+        /**
             Helper function to remove entries.
-            This is used to remove old entries as we advance the sequence buffer forward. 
-            Otherwise, if when entries are added with holes (eg. receive buffer for packets or messages, where not all sequence numbers are added to the buffer because we have high packet loss), 
+            This is used to remove old entries as we advance the sequence buffer forward.
+            Otherwise, if when entries are added with holes (eg. receive buffer for packets or messages, where not all sequence numbers are added to the buffer because we have high packet loss),
             and we are extremely unlucky, we can have old sequence buffer entries from the previous sequence # wrap around still in the buffer, which corrupts our internal connection state.
             This actually happened in the soak test at high packet loss levels (>90%). It took me days to track it down :)
          */
 
         void RemoveEntries( int start_sequence, int finish_sequence )
         {
-            if ( finish_sequence < start_sequence ) 
+            if ( finish_sequence < start_sequence )
                 finish_sequence += 65535;
             yojimbo_assert( finish_sequence >= start_sequence );
             if ( finish_sequence - start_sequence < m_size )
@@ -1340,7 +1331,7 @@ namespace yojimbo {
         uint16_t m_sequence;                       ///< The most recent sequence number added to the buffer.
         uint32_t * m_entry_sequence;               ///< Array of sequence numbers corresponding to each sequence buffer entry for fast lookup. Set to 0xFFFFFFFF if no entry exists at that index.
         T * m_entries;                             ///< The sequence buffer entries. This is where the data is stored per-entry. Separate from the sequence numbers for fast lookup (hot/cold split) when the data per-sequence number is relatively large.
-        
+
         SequenceBuffer( const SequenceBuffer<T> & other );
 
         SequenceBuffer<T> & operator = ( const SequenceBuffer<T> & other );
@@ -1360,7 +1351,7 @@ namespace yojimbo {
 
         /**
             Bit writer constructor.
-            Creates a bit writer object to write to the specified buffer. 
+            Creates a bit writer object to write to the specified buffer.
             @param data The pointer to the buffer to fill with bitpacked data.
             @param bytes The size of the buffer in bytes. Must be a multiple of 4, because the bitpacker reads and writes memory as dwords, not bytes.
          */
@@ -1493,7 +1484,7 @@ namespace yojimbo {
                 m_data[m_wordIndex] = host_to_network( uint32_t( m_scratch & 0xFFFFFFFF ) );
                 m_scratch >>= 32;
                 m_scratchBits = 0;
-                m_wordIndex++;                
+                m_wordIndex++;
             }
         }
 
@@ -1507,7 +1498,7 @@ namespace yojimbo {
             return ( 8 - ( m_bitsWritten % 8 ) ) % 8;
         }
 
-        /** 
+        /**
             How many bits have we written so far?
             @returns The number of bits written to the bit buffer.
          */
@@ -1527,7 +1518,7 @@ namespace yojimbo {
         {
             return m_numBits - m_bitsWritten;
         }
-        
+
         /**
             Get a pointer to the data written by the bit writer.
             Corresponds to the data block passed in to the constructor.
@@ -1646,8 +1637,8 @@ namespace yojimbo {
 
         /**
             Read an align.
-            Call this on read to correspond to a WriteAlign call when the bitpacked buffer was written. 
-            This makes sure we skip ahead to the next aligned byte index. As a safety check, we verify that the padding to next byte is zero bits and return false if that's not the case. 
+            Call this on read to correspond to a WriteAlign call when the bitpacked buffer was written.
+            This makes sure we skip ahead to the next aligned byte index. As a safety check, we verify that the padding to next byte is zero bits and return false if that's not the case.
             This will typically abort packet read. Just another safety measure...
             @returns True if we successfully read an align and skipped ahead past zero pad, false otherwise (probably means, no align was written to the stream).
             @see BitWriter::WriteAlign
@@ -1720,7 +1711,7 @@ namespace yojimbo {
             return ( 8 - m_bitsRead % 8 ) % 8;
         }
 
-        /** 
+        /**
             How many bits have we read so far?
             @returns The number of bits read from the bit buffer so far.
          */
@@ -1773,7 +1764,7 @@ namespace yojimbo {
     // #define yojimbo_getvarint yojimbo_get_varint
     // #define yojimbo_putvarint yojimbo_put_varint
 
-    /** 
+    /**
         Functionality common to all stream classes.
      */
 
@@ -1949,7 +1940,7 @@ namespace yojimbo {
             return true;
         }
 
-        /** 
+        /**
             If we were to write an align right now, how many bits would be required?
             @returns The number of zero pad bits required to achieve byte alignment in [0,7].
          */
@@ -2078,7 +2069,7 @@ namespace yojimbo {
             int i = 0;
             uint8_t data[6];
             uint32_t read_value;
-            do { 
+            do {
                 if ( m_reader.WouldReadPastEnd( 8 ) )
                     return false;
                 read_value = m_reader.ReadBits( 8 );
@@ -2100,7 +2091,7 @@ namespace yojimbo {
             int i = 0;
             uint8_t data[10];
             uint32_t read_value;
-            do { 
+            do {
                 if ( m_reader.WouldReadPastEnd( 8 ) )
                     return false;
                 read_value = m_reader.ReadBits( 8 );
@@ -2161,7 +2152,7 @@ namespace yojimbo {
             return true;
         }
 
-        /** 
+        /**
             If we were to read an align right now, how many bits would we need to read?
             @returns The number of zero pad bits required to achieve byte alignment in [0,7].
          */
@@ -2179,7 +2170,7 @@ namespace yojimbo {
 
         bool SerializeCheck()
         {
-#if YOJIMBO_SERIALIZE_CHECKS            
+#if YOJIMBO_SERIALIZE_CHECKS
             if ( !SerializeAlign() )
                 return false;
             uint32_t value = 0;
@@ -2224,7 +2215,7 @@ namespace yojimbo {
         Stream class for estimating how many bits it would take to serialize something.
         This class acts like a bit writer (IsWriting is 1, IsReading is 0), but instead of writing data, it counts how many bits would be written.
         It's used by the connection channel classes to work out how many messages will fit in the channel packet budget.
-        Note that when the serialization includes alignment to byte (see MeasureStream::SerializeAlign), this is an estimate and not an exact measurement. The estimate is guaranteed to be conservative. 
+        Note that when the serialization includes alignment to byte (see MeasureStream::SerializeAlign), this is an estimate and not an exact measurement. The estimate is guaranteed to be conservative.
         @see BitWriter
         @see BitReader
      */
@@ -2252,7 +2243,7 @@ namespace yojimbo {
          */
 
         bool SerializeInteger( int32_t value, int32_t min, int32_t max )
-        {   
+        {
             (void) value;
             yojimbo_assert( min < max );
             yojimbo_assert( value >= min );
@@ -2269,7 +2260,7 @@ namespace yojimbo {
          */
 
         bool SerializeVarint32( int32_t value )
-        {   
+        {
             const int bits = yojimbo_measure_varint( value ) * 8;
             m_bitsWritten += bits;
             return true;
@@ -2282,7 +2273,7 @@ namespace yojimbo {
         */
 
         bool SerializeVarint64( int64_t value )
-        {   
+        {
             const int bits = yojimbo_measure_varint( value ) * 8;
             m_bitsWritten += bits;
             return true;
@@ -2331,9 +2322,9 @@ namespace yojimbo {
             return true;
         }
 
-        /** 
+        /**
             If we were to write an align right now, how many bits would be required?
-            IMPORTANT: Since the number of bits required for alignment depends on where an object is written in the final bit stream, this measurement is conservative. 
+            IMPORTANT: Since the number of bits required for alignment depends on where an object is written in the final bit stream, this measurement is conservative.
             @returns Always returns worst case 7 bits.
          */
 
@@ -2779,7 +2770,7 @@ namespace yojimbo {
             }
             return true;
         }
-        
+
         bool twoBits = false;
         if ( Stream::IsWriting )
         {
@@ -2795,7 +2786,7 @@ namespace yojimbo {
             }
             return true;
         }
-        
+
         bool fourBits = false;
         if ( Stream::IsWriting )
         {
@@ -3079,9 +3070,9 @@ namespace yojimbo {
         @see WriteStream
         @see MeasureStream
      */
-    
+
     class Serializable
-    {  
+    {
     public:
 
         virtual ~Serializable() {}
@@ -3120,9 +3111,9 @@ namespace yojimbo {
     #define YOJIMBO_VIRTUAL_SERIALIZE_FUNCTIONS()                                                               \
         bool SerializeInternal( class yojimbo::ReadStream & stream ) { return Serialize( stream ); }            \
         bool SerializeInternal( class yojimbo::WriteStream & stream ) { return Serialize( stream ); }           \
-        bool SerializeInternal( class yojimbo::MeasureStream & stream ) { return Serialize( stream ); }         
+        bool SerializeInternal( class yojimbo::MeasureStream & stream ) { return Serialize( stream ); }
 
 
 } // yojimbo
 
-#endif // #ifndef YOJIMBO_H
+#endif // #ifndef YOJIMBO_SERIALIZER_H
