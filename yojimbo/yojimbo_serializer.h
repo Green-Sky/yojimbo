@@ -2693,6 +2693,43 @@ namespace yojimbo {
             }                                                                               \
         } while (0)
 
+    template <typename Stream> bool serialize_stl_string_internal( Stream & stream, std::string& string )
+    {
+		const int max_length = 1024; // TODO: this is super arbitrary
+        int length = 0;
+        if ( Stream::IsWriting ) {
+            length = string.size();
+            yojimbo_assert( length <= max_length );
+        }
+
+        serialize_int( stream, length, 0, length );
+
+        if ( Stream::IsReading ) {
+			string.resize(length);
+        }
+        serialize_bytes( stream, (uint8_t*)string.data(), length );
+        return true;
+    }
+
+    /**
+        Serialize a standard library string to the stream (read/write/measure).
+        This is a helper macro to make writing unified serialize functions easier.
+        Serialize macros returns false on error so we don't need to use exceptions for error handling on read. This is an important safety measure because packet data comes from the network and may be malicious.
+        IMPORTANT: This macro must be called inside a templated serialize function with template \<typename Stream\>. The serialize method must have a bool return value.
+        @param stream The stream object. May be a read, write or measure stream.
+        @param string The string to serialize write/measure. Pointer to buffer to be filled on read.
+        @param buffer_size The size of the string buffer. String with terminating null character must fit into this buffer.
+     */
+
+    #define serialize_stl_string( stream, string )                                          \
+        do                                                                                  \
+        {                                                                                   \
+            if ( !yojimbo::serialize_stl_string_internal( stream, string ) )                \
+            {                                                                               \
+                return false;                                                               \
+            }                                                                               \
+        } while (0)
+
     /**
         Serialize an alignment to the stream (read/write/measure).
         This is a helper macro to make writing unified serialize functions easier.
